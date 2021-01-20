@@ -4,5 +4,5 @@ import model.CidrIp
 
 interface ISuspiciousIpsRepository {
     fun getAllCidrSuspiciousIps(): List<CidrIp>
-    fun getAllCidrPrefixesLengths(): List<Int>
+    fun getAllCidrMasksLengths(): List<Int>
 }

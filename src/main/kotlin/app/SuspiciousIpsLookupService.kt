@@ -5,7 +5,10 @@ import dal.ISuspiciousIpsRepository
 import logic.IBinaryIpCalculator
 
 class SuspiciousIpsLookupService(private val suspiciousIpsRepository: ISuspiciousIpsRepository,
-                                 private val suspiciousLookup: ISuspiciousIpsLookup, private val binaryIpCalculator: IBinaryIpCalculator):ISuspiciousIpsLookupService {
+                                 private val suspiciousLookup: ISuspiciousIpsLookup,
+                                 private val binaryIpCalculator: IBinaryIpCalculator)
+    :ISuspiciousIpsLookupService {
+
     init {
         populateLookup()
     }
@@ -15,26 +18,26 @@ class SuspiciousIpsLookupService(private val suspiciousIpsRepository: ISuspiciou
 
         for (ipCidr in suspiciousIpsCidr) {
             val binaryIp = binaryIpCalculator.convertToBinaryForm(ipCidr.ip)
-            val binaryIpMsb = binaryIpCalculator.getIpMsbBits(binaryIp, ipCidr.cidrPrefixLength)
+            val binaryIpMsb = binaryIpCalculator.getIpMsbBits(binaryIp, ipCidr.cidrMaskLength)
             suspiciousLookup.add(binaryIpMsb)
         }
     }
 
     override fun isAllowed(incomingIp: String): Boolean {
-        val possiblePrefixesLength = suspiciousIpsRepository.getAllCidrPrefixesLengths()
+        val possiblePrefixesLength = suspiciousIpsRepository.getAllCidrMasksLengths()
 
-        var isIncomingIpSuspicious = suspiciousLookup.isSuspiciousIp(incomingIp)
-        if (isIncomingIpSuspicious){
-            return isIncomingIpSuspicious
+        var isSuspiciousIp = suspiciousLookup.isSuspiciousIp(incomingIp)
+        if (isSuspiciousIp){
+            return false
         }
 
-        var i = 0;
-        while (i < possiblePrefixesLength.size && !isIncomingIpSuspicious){
+        var i = 0
+        while (i < possiblePrefixesLength.size && !isSuspiciousIp){
             val possibleIpMsb = getPossibleIpMsb(incomingIp, possiblePrefixesLength, i)
-            isIncomingIpSuspicious = suspiciousLookup.isSuspiciousIp(possibleIpMsb)
+            isSuspiciousIp = suspiciousLookup.isSuspiciousIp(possibleIpMsb)
             i++
         }
-        return isIncomingIpSuspicious
+        return !isSuspiciousIp
     }
 
     private fun getPossibleIpMsb(
