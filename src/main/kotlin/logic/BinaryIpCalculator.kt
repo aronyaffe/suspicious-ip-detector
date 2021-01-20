@@ -4,8 +4,8 @@ class BinaryIpCalculator: IBinaryIpCalculator {
     val BINARY_RADIX = 2
     val OCTET_BITS_NUMBER = 8
 
-    override fun convertToBinaryForm(ip: String): String {
-        val ipOctetsInDecimal = ip.split('.')
+    override fun convertFromDecimalToBinary(ipInDecimal: String): String {
+        val ipOctetsInDecimal = ipInDecimal.split('.')
         val binaryIp = StringBuilder()
 
         for (decimalOctet in ipOctetsInDecimal){

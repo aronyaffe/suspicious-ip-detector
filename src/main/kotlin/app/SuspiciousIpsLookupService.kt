@@ -17,14 +17,14 @@ class SuspiciousIpsLookupService(private val suspiciousIpsRepository: ISuspiciou
         val suspiciousIpsCidr = suspiciousIpsRepository.getAllCidrSuspiciousIps()
 
         for (ipCidr in suspiciousIpsCidr) {
-            val binaryIp = binaryIpCalculator.convertToBinaryForm(ipCidr.ip)
+            val binaryIp = binaryIpCalculator.convertFromDecimalToBinary(ipCidr.ip)
             val binaryIpMsb = binaryIpCalculator.getIpMsbBits(binaryIp, ipCidr.cidrMaskLength)
             suspiciousLookup.add(binaryIpMsb)
         }
     }
 
     override fun isAllowed(incomingIp: String): Boolean {
-        val possiblePrefixesLength = suspiciousIpsRepository.getAllCidrMasksLengths()
+        val allCidrMasksLength = suspiciousIpsRepository.getAllCidrMasksLengths()
 
         var isSuspiciousIp = suspiciousLookup.isSuspiciousIp(incomingIp)
         if (isSuspiciousIp){
@@ -32,21 +32,19 @@ class SuspiciousIpsLookupService(private val suspiciousIpsRepository: ISuspiciou
         }
 
         var i = 0
-        while (i < possiblePrefixesLength.size && !isSuspiciousIp){
-            val possibleIpMsb = getPossibleIpMsb(incomingIp, possiblePrefixesLength, i)
-            isSuspiciousIp = suspiciousLookup.isSuspiciousIp(possibleIpMsb)
+        while (i < allCidrMasksLength.size && !isSuspiciousIp){
+            val maskedIp = getMaskedIp(incomingIp, allCidrMasksLength[i])
+            isSuspiciousIp = suspiciousLookup.isSuspiciousIp(maskedIp)
             i++
         }
         return !isSuspiciousIp
     }
 
-    private fun getPossibleIpMsb(
+    private fun getMaskedIp(
         incomingIp: String,
-        possiblePrefixesLength: List<Int>,
-        i: Int
+        possibleIpMsbLength: Int
     ): String {
-        val binaryIp = binaryIpCalculator.convertToBinaryForm(incomingIp)
-        val possibleIpMsbLength = possiblePrefixesLength[i]
+        val binaryIp = binaryIpCalculator.convertFromDecimalToBinary(incomingIp)
         return binaryIpCalculator.getIpMsbBits(binaryIp, possibleIpMsbLength)
     }
 }
